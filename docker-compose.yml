@@ -1,0 +1,26 @@
+services:
+  # O "cliente Signal" do bot. Fica só dentro da VPS (porta 8091, acesso local).
+  signal-api:
+    image: bbernhard/signal-cli-rest-api:latest
+    container_name: signal-api
+    restart: unless-stopped
+    environment:
+      - MODE=normal
+    ports:
+      - "127.0.0.1:8091:8080"
+    volumes:
+      - ./signal-cli-config:/home/.local/share/signal-cli
+
+  # Camada de segurança: é a única porta aberta para a internet (8880)
+  # e exige a chave de acesso (API_TOKEN do arquivo .env) em todo envio.
+  seguranca:
+    image: ghcr.io/codeshelldev/secured-signal-api:latest
+    container_name: signal-seguranca
+    restart: unless-stopped
+    depends_on:
+      - signal-api
+    environment:
+      API__URL: http://signal-api:8080
+      API__TOKENS: '["${API_TOKEN}"]'
+    ports:
+      - "8880:8880"

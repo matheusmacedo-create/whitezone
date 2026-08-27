@@ -1,0 +1,6 @@
+# Segredos e dados da conta Signal — nunca commitar
+.env
+signal-cli-config/
+
+# Criado temporariamente pelo instalar.sh durante o QR code
+docker-compose.override.yml

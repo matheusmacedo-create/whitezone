@@ -1,0 +1,39 @@
+# Exemplo: avisar no Signal quando o deploy termina (ou falha).
+#
+# Como usar:
+#   1. Copie este job (ou só o step "Avisar no Signal") para o workflow
+#      do seu projeto, em .github/workflows/.
+#   2. No repositório do projeto, crie os secrets:
+#        SIGNAL_URL    = http://SEU-IP:8880/v2/send
+#        SIGNAL_TOKEN  = a chave de acesso da central (API_TOKEN do .env)
+#        SIGNAL_NUMBER = número do bot (ex: +5521999999999)
+#        SIGNAL_DESTINO = contato (+55...) ou grupo (group.abc==)
+
+name: Notificar no Signal
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Seu deploy aqui
+        run: echo "deploy..."
+
+      - name: Avisar no Signal (sucesso)
+        if: success()
+        run: |
+          curl -fsS -X POST "${{ secrets.SIGNAL_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.SIGNAL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"message\": \"✅ ${{ github.repository }}: deploy concluído (${{ github.ref_name }})\", \"number\": \"${{ secrets.SIGNAL_NUMBER }}\", \"recipients\": [\"${{ secrets.SIGNAL_DESTINO }}\"]}"
+
+      - name: Avisar no Signal (falha)
+        if: failure()
+        run: |
+          curl -fsS -X POST "${{ secrets.SIGNAL_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.SIGNAL_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"message\": \"🔴 ${{ github.repository }}: deploy FALHOU — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\", \"number\": \"${{ secrets.SIGNAL_NUMBER }}\", \"recipients\": [\"${{ secrets.SIGNAL_DESTINO }}\"]}"
