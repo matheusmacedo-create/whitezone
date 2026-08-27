@@ -4,6 +4,10 @@ O Make vira o "roteador" da central: cada projeto dispara um webhook, e o
 Make entrega no contato ou grupo certo do Signal. Você só monta módulos —
 nenhuma linha de código.
 
+> Onde encontrar os valores usados abaixo: `SEU-IP` e `SUA_CHAVE` aparecem no
+> resumo final do `./instalar.sh` (a chave também está no arquivo `.env` da
+> VPS). O id de grupo vem do `./grupos.sh`.
+
 ## Cenário básico: um projeto → um destino
 
 **1. Módulo `Webhooks → Custom webhook`**
@@ -11,7 +15,22 @@ nenhuma linha de código.
 - Crie o webhook (ex: `notificacao-projeto-a`) e copie a URL gerada.
 - Essa URL é o que o Projeto A vai chamar quando quiser avisar algo.
 
-**2. Módulo `HTTP → Make a request`** (logo depois do webhook)
+**2. Envie um teste para o webhook "aprender" os campos**
+
+O Make só mostra os campos para mapear depois de receber a primeira
+requisição de exemplo. Com o webhook em modo de escuta ("Redetermine data
+structure" / aguardando dados), rode no seu computador ou na VPS:
+
+```bash
+curl -X POST 'https://hook.us1.make.com/SEU_WEBHOOK' \
+  -H 'Content-Type: application/json' \
+  -d '{"mensagem": "Primeiro aviso do Projeto A 🎉"}'
+```
+
+O Make deve exibir "Successfully determined" — agora o campo `mensagem`
+existe para ser mapeado.
+
+**3. Módulo `HTTP → Make a request`** (logo depois do webhook)
 
 | Campo | Valor |
 |---|---|
@@ -31,17 +50,14 @@ Request content:
 }
 ```
 
-> `{{1.mensagem}}` é o campo `mensagem` vindo do webhook — mapeie pelo
-> painel do Make. Em `recipients` use o grupo do projeto (pegue o id com
-> `./grupos.sh` na VPS) ou um contato direto (`+5521988887777`).
+> `{{1.mensagem}}` é o campo `mensagem` vindo do webhook — depois do passo 2
+> ele aparece no painel de mapeamento do Make; clique nele em vez de digitar.
+> Em `recipients` use o grupo do projeto ou um contato direto
+> (`+5521988887777`).
 
-**3. Teste**
+**4. Ative o cenário e teste de novo**
 
-```bash
-curl -X POST 'https://hook.us1.make.com/SEU_WEBHOOK' \
-  -H 'Content-Type: application/json' \
-  -d '{"mensagem": "Primeiro aviso do Projeto A 🎉"}'
-```
+Rode o mesmo curl do passo 2 — a mensagem deve chegar no Signal.
 
 ## Vários projetos em um cenário só (Router)
 

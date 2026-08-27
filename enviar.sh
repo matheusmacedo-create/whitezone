@@ -12,8 +12,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 [ -f .env ] || { echo "Rode ./instalar.sh primeiro."; exit 1; }
+# O tr remove quebras de linha do Windows, caso o .env seja editado por lá.
 set -a
-. ./.env
+. <(tr -d '\r' < .env)
 set +a
 
 if [ $# -lt 2 ]; then

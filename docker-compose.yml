@@ -6,6 +6,9 @@ services:
     restart: unless-stopped
     environment:
       - MODE=normal
+      # Processa mensagens pendentes 1x por dia — é assim que o bot fica
+      # sabendo de grupos novos e mudanças de participantes feitas no celular.
+      - AUTO_RECEIVE_SCHEDULE=0 4 * * *
     ports:
       - "127.0.0.1:8091:8080"
     volumes:
@@ -13,6 +16,7 @@ services:
 
   # Camada de segurança: é a única porta aberta para a internet (8880)
   # e exige a chave de acesso (API_TOKEN do arquivo .env) em todo envio.
+  # A chave só permite ENVIAR mensagens (/v2/send) — mais nada.
   seguranca:
     image: ghcr.io/codeshelldev/secured-signal-api:latest
     container_name: signal-seguranca
@@ -21,6 +25,7 @@ services:
       - signal-api
     environment:
       API__URL: http://signal-api:8080
-      API__TOKENS: '["${API_TOKEN}"]'
+      API__TOKENS: '["${API_TOKEN:?rode ./instalar.sh primeiro}"]'
+      SETTINGS__ACCESS__ENDPOINTS__ALLOWED: '[{"pattern": "/v2/send", "matchType": "prefix"}]'
     ports:
       - "8880:8880"
